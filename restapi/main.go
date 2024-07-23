@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"sync"
 	"time"
@@ -21,7 +20,7 @@ import (
 // Cache structure to hold user data with timestamp
 type Cache struct {
 	ID        uint      `gorm:"primaryKey"`
-	User      string    `gorm:"unique;not null" json:"User Id"`
+	User      string    `gorm:"unique;not null" json:"UserId"`
 	Password  string    `json:"Password"`
 	Number    string    `json:"Access Number"`
 	CreatedAt time.Time `json:"Created At"` // Timestamp field
@@ -31,7 +30,7 @@ type Cache struct {
 type CacheClient interface {
 	Get(key string) (Cache, bool)
 	Set(key string, value Cache)
-	Print()
+	Print() // Include the Print method
 }
 
 // LRUCache item structure with timestamp
@@ -106,7 +105,6 @@ func (c *LRUCache) Set(key string, value Cache) {
 	}
 }
 
-// Print LRUCache content
 func (c *LRUCache) Print() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -162,7 +160,6 @@ func (r *RedisCache) Set(key string, value Cache) {
 	r.client.Set(r.ctx, key, val, 5*time.Minute)
 }
 
-// Print RedisCache content (not implemented)
 func (r *RedisCache) Print() {
 	fmt.Println("Redis cache content print not supported.")
 }
@@ -209,7 +206,6 @@ func (m *Memcached) Set(key string, value Cache) {
 	})
 }
 
-// Print Memcached content (not implemented)
 func (m *Memcached) Print() {
 	fmt.Println("Memcached cache content print not supported.")
 }
@@ -243,23 +239,13 @@ func authMiddleware(next http.Handler) http.Handler {
 		var cacheEntry Cache
 		result := db.Where("user = ?", username).First(&cacheEntry)
 
-		if result.Error != nil {
-			// User does not exist, create a new user
-			newUser := Cache{
-				User:     username,
-				Password: password,
-				Number:   fmt.Sprintf("%06d", rand.Intn(1000000)), // Generate a 6-digit access number
-			}
-
-			if err := db.Create(&newUser).Error; err != nil {
-				http.Error(w, "Failed to create user", http.StatusInternalServerError)
-				return
-			}
-			cacheEntry = newUser
-		} else if cacheEntry.Password != password {
+		if result.Error != nil || cacheEntry.Password != password {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+
+		// Update cache with the latest user details
+		cache.Set(cacheEntry.Number, cacheEntry)
 
 		// If authentication is successful, proceed with the request
 		next.ServeHTTP(w, r)
@@ -268,9 +254,11 @@ func authMiddleware(next http.Handler) http.Handler {
 
 // Get all users from the database
 func GetUsers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GetUsers called")
 	w.Header().Set("Content-type", "application/json")
 	var caches []Cache
 	if err := db.Find(&caches).Error; err != nil {
+		log.Printf("Error fetching users: %v", err)
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
 	}
@@ -279,6 +267,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 
 // Get a specific user by access number
 func GetUser(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GetUser called")
 	w.Header().Set("Content-type", "application/json")
 	params := mux.Vars(r)
 	cacheKey := params["id"]
@@ -299,6 +288,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 
 // Create a new user
 func CreateUsers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("CreateUsers called") // Add this line
 	w.Header().Set("Content-type", "application/json")
 	var newCache Cache
 	if err := json.NewDecoder(r.Body).Decode(&newCache); err != nil {
@@ -336,6 +326,7 @@ func CreateUsers(w http.ResponseWriter, r *http.Request) {
 
 // Delete a user by access number
 func DeleteUsers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("DeleteUsers called") // Add this line
 	w.Header().Set("Content-type", "application/json")
 	params := mux.Vars(r)
 	cacheKey := params["id"]
@@ -349,7 +340,15 @@ func DeleteUsers(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Main function initializes the router and starts the server
+// PrintCache prints the cache content
+func PrintCache(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-type", "application/json")
+
+	cache.Print() // Call the Print method on the cache
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func main() {
 	var err error
 	db, err = initDB()
@@ -377,10 +376,11 @@ func main() {
 	router.HandleFunc("/cache/{id}", GetUser).Methods("GET")        // Get user by access number
 	router.HandleFunc("/cache", CreateUsers).Methods("POST")        // Create a new user
 	router.HandleFunc("/cache/{id}", DeleteUsers).Methods("DELETE") // Delete a user by access number
+	router.HandleFunc("/cache/print", PrintCache).Methods("GET")    // Print cache content
 
 	// Apply authentication middleware to protected routes
-	authRouter := authMiddleware(router)
+	//authRouter := authMiddleware(router) // Comment out the middleware for testing
 
 	// Start the server on port 8000
-	log.Fatal(http.ListenAndServe(":8000", authRouter))
+	log.Fatal(http.ListenAndServe(":8000", router))
 }
