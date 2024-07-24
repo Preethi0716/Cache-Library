@@ -26,7 +26,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-// handleCacheRequest returns a function that handles cache requests
 func handleCacheRequest(unifiedCache *api.UnifiedCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -89,7 +88,6 @@ func handleGetAllCacheRequest(unifiedCache *api.UnifiedCache) http.HandlerFunc {
 	}
 }
 
-// Implementations for getCacheValue, setCacheValue, and deleteCacheValue...
 func getCacheValue(unifiedCache *api.UnifiedCache, key string, cacheType string) (string, error) {
 	var value interface{}
 	var err error
