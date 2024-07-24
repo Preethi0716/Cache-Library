@@ -5,7 +5,6 @@ import (
 	"preethi/go/src/preethi/restapi/pkg/cache"
 )
 
-// InitCache initializes the caches and returns a UnifiedCache instance
 func InitCache() (*UnifiedCache, error) {
 	// Initialize LRU Cache with size 100
 	inMemoryCache := cache.NewLRUCache(5)
