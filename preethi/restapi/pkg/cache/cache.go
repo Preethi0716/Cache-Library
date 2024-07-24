@@ -1,4 +1,3 @@
-// pkg/cache/cache.go
 package cache
 
 import "time"
