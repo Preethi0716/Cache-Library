@@ -12,18 +12,15 @@ import (
 )
 
 func main() {
-	// Initialize the caches
 	unifiedCache, err := api.InitCache()
 	if err != nil {
 		log.Fatalf("Failed to initialize caches: %v", err)
 	}
 
-	// Set up the router
 	r := mux.NewRouter()
 	r.HandleFunc("/cache/{key}", handleCacheRequest(unifiedCache)).Methods("GET", "POST", "DELETE")
 	r.HandleFunc("/cache", handleGetAllCacheRequest(unifiedCache)).Methods("GET")
 
-	// Start the server
 	log.Println("Server is starting on port 8080...")
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe(":8080", nil))
