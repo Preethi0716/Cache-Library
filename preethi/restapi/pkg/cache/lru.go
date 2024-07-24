@@ -7,14 +7,12 @@ import (
 	"time"
 )
 
-// CacheItem represents a single item in the cache
 type CacheItem struct {
 	key        string
 	value      interface{}
 	expiration time.Time
 }
 
-// LRUCache represents an LRU cache
 type LRUCache struct {
 	capacity int
 	items    map[string]*list.Element
@@ -22,7 +20,6 @@ type LRUCache struct {
 	mutex    sync.Mutex
 }
 
-// NewLRUCache creates a new LRUCache with the given capacity
 func NewLRUCache(capacity int) *LRUCache {
 	return &LRUCache{
 		capacity: capacity,
@@ -31,7 +28,6 @@ func NewLRUCache(capacity int) *LRUCache {
 	}
 }
 
-// Set sets a value in the cache with an optional TTL
 func (c *LRUCache) Set(key string, value interface{}, ttl time.Duration) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -57,7 +53,6 @@ func (c *LRUCache) Set(key string, value interface{}, ttl time.Duration) error {
 	return nil
 }
 
-// Get gets a value from the cache
 func (c *LRUCache) Get(key string) (interface{}, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -74,7 +69,6 @@ func (c *LRUCache) Get(key string) (interface{}, error) {
 	return nil, errors.New("cache miss")
 }
 
-// Delete deletes a value from the cache
 func (c *LRUCache) Delete(key string) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -87,7 +81,6 @@ func (c *LRUCache) Delete(key string) error {
 	return errors.New("cache miss")
 }
 
-// GetAll retrieves all values from the cache
 func (c *LRUCache) GetAll() (map[string]interface{}, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
