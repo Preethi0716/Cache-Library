@@ -25,6 +25,5 @@ func InitCache() (*UnifiedCache, error) {
 		return nil, fmt.Errorf("failed to initialize Memcached cache: %w", err)
 	}
 
-	// Create and return UnifiedCache instance
 	return NewUnifiedCache(inMemoryCache, redisCache, memcachedCache), nil
 }
