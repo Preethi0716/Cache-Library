@@ -1,5 +1,3 @@
-// tests/redis_test.go
-
 package tests
 
 import (
