@@ -1,3 +1,5 @@
+//Redis cache syntax to perform cache mechanisms
+
 package cache
 
 import (
