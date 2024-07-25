@@ -8,20 +8,17 @@ import (
 )
 
 func InitCache() (*UnifiedCache, error) {
-	// Initialize LRU Cache with size 100
 	inMemoryCache := cache.NewLRUCache(5)
 	if inMemoryCache == nil {
 		return nil, fmt.Errorf("failed to initialize in-memory cache")
 	}
 
-	// Initialize Redis Cache with address
-	redisCache, err := cache.NewRedisCache("localhost:6379") // Adjust the address as needed
+	redisCache, err := cache.NewRedisCache("localhost:6379")
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Redis cache: %w", err)
 	}
 
-	// Initialize Memcached Cache with address
-	memcachedCache, err := cache.NewMemcachedCache("localhost:11211") // Adjust the address as needed
+	memcachedCache, err := cache.NewMemcachedCache("localhost:11211")
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Memcached cache: %w", err)
 	}
