@@ -1,8 +1,9 @@
+//to define the mechanisms of cache
+
 package cache
 
 import "time"
 
-// Cache interface defines methods for caching
 type Cache interface {
 	Set(key string, value interface{}, ttl time.Duration) error
 	Get(key string) (interface{}, error)
