@@ -1,3 +1,5 @@
+// for initializing the cache
+
 package api
 
 import (
