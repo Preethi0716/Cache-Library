@@ -1,3 +1,5 @@
+//for handling the cache types and cache mechanism based on incoming HTTP request
+
 package api
 
 import (
