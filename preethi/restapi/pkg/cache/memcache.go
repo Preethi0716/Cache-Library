@@ -1,4 +1,4 @@
-////Redix cache syntax to perform cache mechanisms
+//Memcached cache syntax to perform cache mechanisms
 
 package cache
 
