@@ -1,56 +1,76 @@
 package tests
 
 import (
-	"preethi/go/src/preethi/restapi/pkg/cache"
 	"testing"
 	"time"
+
+	"github.com/Preethi0716/Cache-Library/preethi/restapi/pkg/cache"
 )
 
-const memcachedAddress = "localhost:11211"
-
 func TestMemcachedCache_SetGet(t *testing.T) {
-	cache, err := cache.NewMemcachedCache(memcachedAddress)
+	cache, err := cache.NewMemcachedCache("localhost:11211")
 	if err != nil {
 		t.Fatalf("Failed to create Memcached cache: %v", err)
 	}
-	cache.Set("key1", "value1", time.Minute)
+
+	err = cache.Set("key1", "value1", time.Minute)
+	if err != nil {
+		t.Fatalf("Failed to set value: %v", err)
+	}
 
 	value, err := cache.Get("key1")
 	if err != nil || value != "value1" {
-		t.Fatalf("Expected value1, got %v, error: %v", value, err)
+		t.Fatalf("Expected value1, got %v", value)
 	}
 }
 
 func TestMemcachedCache_Delete(t *testing.T) {
-	cache, err := cache.NewMemcachedCache(memcachedAddress)
+	cache, err := cache.NewMemcachedCache("localhost:11211")
 	if err != nil {
 		t.Fatalf("Failed to create Memcached cache: %v", err)
 	}
-	cache.Set("key1", "value1", time.Minute)
-	cache.Delete("key1")
+
+	err = cache.Set("key1", "value1", time.Minute)
+	if err != nil {
+		t.Fatalf("Failed to set value: %v", err)
+	}
+
+	err = cache.Delete("key1")
+	if err != nil {
+		t.Fatalf("Failed to delete key: %v", err)
+	}
+
 	_, err = cache.Get("key1")
 	if err == nil {
 		t.Fatal("Expected an error for a deleted key")
 	}
 }
 
-func BenchmarkMemcachedCache_Set(b *testing.B) {
-	cache, err := cache.NewMemcachedCache(memcachedAddress)
+func TestMemcachedCache_TTL_Expiration(t *testing.T) {
+	cache, err := cache.NewMemcachedCache("localhost:11211")
 	if err != nil {
-		b.Fatalf("Failed to create Memcached cache: %v", err)
+		t.Fatalf("Failed to create Memcached cache: %v", err)
 	}
-	for i := 0; i < b.N; i++ {
-		cache.Set("key", "value", time.Minute)
-	}
-}
 
-func BenchmarkMemcachedCache_Get(b *testing.B) {
-	cache, err := cache.NewMemcachedCache(memcachedAddress)
+	err = cache.Set("key1", "value1", 1*time.Second)
 	if err != nil {
-		b.Fatalf("Failed to create Memcached cache: %v", err)
+		t.Fatalf("Failed to set value with TTL: %v", err)
 	}
-	cache.Set("key", "value", time.Minute)
-	for i := 0; i < b.N; i++ {
-		cache.Get("key")
+
+	value, err := cache.Get("key1")
+	if err != nil || value != "value1" {
+		t.Fatalf("Expected value1, got %v, error: %v", value, err)
+	}
+
+	time.Sleep(2 * time.Second)
+
+	value, err = cache.Get("key1")
+
+	if err != nil && err.Error() != "memcache: cache miss" {
+		t.Fatalf("Expected cache miss error, got: %v", err)
+	}
+
+	if value != nil {
+		t.Fatalf("Expected empty value, got: %v", value)
 	}
 }
